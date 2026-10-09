@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="format-detection" content="telephone=no">
+<title>九寨沟互动地图 · 源全｜逸景酒店</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  :root{
+    --navy:#173a5e; --blue:#2f80c7; --cyan:#19a7c4;
+    --r:#3f7fd6;       /* 日则沟 */
+    --z:#12a39a;       /* 则查洼沟 */
+    --s:#2b7fb8;       /* 树正沟 */
+    --gold:#f4a62a; --ink:#24405c; --sub:#6b8299;
+    --line:#d8e7f3; --bg:#eef6fc; --card:#ffffff;
+  }
+  html,body{ background:#cfe2f2; }
+  body{
+    font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Helvetica Neue","Microsoft YaHei",sans-serif;
+    color:var(--ink); display:flex; justify-content:center;
+    background:linear-gradient(180deg,#cfe4f5 0%,#e8f3fb 40%,#dcebf7 100%);
+    min-height:100vh;
+  }
+  .app{ width:100%; max-width:480px; min-height:100vh; background:linear-gradient(180deg,#eaf4fc 0%,#f6fbff 55%,#eaf4fc 100%); position:relative; padding-bottom:34px; }
+
+  /* ===== 顶部 ===== */
+  .hero{ padding:20px 18px 0; text-align:center; position:relative; }
+  .hotel-pill{
+    display:inline-block; background:#fff; border:1px solid #d7e7f5; border-radius:999px;
+    padding:7px 18px; font-size:13px; color:var(--blue); font-weight:600; letter-spacing:.5px;
+    box-shadow:0 4px 14px rgba(47,128,199,.10);
+  }
+  .hero h1{
+    margin-top:14px; font-size:34px; line-height:1.22; color:var(--navy); font-weight:800; letter-spacing:3px;
+  }
+  .hero p{ margin-top:10px; font-size:13.5px; color:var(--sub); line-height:1.7; }
+  .chips{ display:flex; gap:8px; margin:16px 18px 0; }
+  .chip{
+    flex:1; background:#fff; border:1px solid #dbeaf6; border-radius:12px; padding:9px 4px;
+    text-align:center; box-shadow:0 3px 10px rgba(47,128,199,.07);
+  }
+  .chip b{ display:block; font-size:13.5px; color:var(--navy); }
+  .chip span{ display:block; font-size:11px; color:#8aa3ba; margin-top:2px; }
+  .chip.route-chip{ background:linear-gradient(135deg,#2f80c7,#19a7c4); border-color:transparent; cursor:pointer; }
+  .chip.route-chip b,.chip.route-chip span{ color:#fff; }
+  .legend{ display:flex; gap:14px; justify-content:center; margin-top:12px; font-size:11.5px; color:#5f7a94; }
+  .legend i{ display:inline-block; width:9px; height:9px; border-radius:50%; margin-right:4px; vertical-align:-1px; }
+
+  /* ===== 地图 ===== */
+  .map-wrap{
+    position:relative; width:calc(100% - 20px); margin:12px auto 0; aspect-ratio:420/760;
+    container-type:inline-size;
+    border-radius:22px; overflow:hidden;
+    background:linear-gradient(180deg,#eaf5fd 0%,#f2f9ff 45%,#e9f5fc 100%);
+    box-shadow:0 10px 30px rgba(39,99,150,.14), inset 0 0 0 1px #fff;
+  }
+  .map-wrap svg{ position:absolute; inset:0; width:100%; height:100%; }
+  .hint{
+    position:absolute; left:50%; bottom:10px; transform:translateX(-50%);
+    background:rgba(23,58,94,.78); color:#fff; font-size:11px; padding:5px 12px; border-radius:999px;
+    white-space:nowrap; z-index:5; pointer-events:none; transition:opacity .5s;
+  }
+  .hint.hide{ opacity:0; }
+
+  .spot{
+    position:absolute; transform:translate(-50%,-50%);
+    background:none; border:none; padding:0; z-index:3; cursor:pointer;
+  }
+  .spot .dot{
+    display:block; width:3.8cqw; height:3.8cqw; min-width:14px; min-height:14px; border-radius:50%;
+    background:var(--c); border:2.5px solid #fff; box-sizing:border-box;
+    box-shadow:0 2px 5px rgba(20,60,100,.35);
+    position:relative; z-index:2;
+  }
+  .spot .lbl{
+    position:absolute; top:50%; transform:translateY(-50%);
+    background:rgba(255,255,255,.92); border:1px solid #d4e6f4; border-radius:8px;
+    padding:2px 7px; font-size:3.4cqw; line-height:1.4; white-space:nowrap;
+    color:var(--navy); font-weight:600; box-shadow:0 2px 6px rgba(30,80,130,.10);
+  }
+  .spot .lbl::before{ content:""; position:absolute; top:50%; width:3.6cqw; height:2px; background:#bcd6ea; }
+  .spot.side-l .lbl{ right:calc(3.8cqw + 7px); text-align:right; }
+  .spot.side-l .lbl::before{ right:calc(-3.6cqw - 1px); }
+  .spot.side-r .lbl{ left:calc(3.8cqw + 7px); text-align:left; }
+  .spot.side-r .lbl::before{ left:calc(-3.6cqw - 1px); }
+  .spot.side-t .lbl{ bottom:calc(3.8cqw + 7px); left:50%; top:auto; transform:translateX(-50%); }
+  .spot.side-t .lbl::before{ top:auto; bottom:calc(-3.6cqw - 1px); left:50%; width:2px; height:3.6cqw; }
+  .spot.side-b .lbl{ top:calc(3.8cqw + 7px); left:50%; transform:translateX(-50%); }
+  .spot.side-b .lbl::before{ left:50%; top:calc(-3.6cqw - 1px); width:2px; height:3.6cqw; }
+
+  .spot.hot .lbl{ color:#b5740c; border-color:#f2d8a6; background:#fffaf0; }
+  .spot.hot .dot::after{
+    content:""; position:absolute; inset:-7px; border-radius:50%;
+    border:2px solid var(--gold); animation:pulse 1.8s ease-out infinite;
+  }
+  @keyframes pulse{ 0%{transform:scale(.6);opacity:.9;} 100%{transform:scale(1.5);opacity:0;} }
+  .spot.special .dot{ background:#f4a62a; width:4.6cqw; height:4.6cqw; }
+  .spot.entry .dot{ background:#3aa76d; width:4.6cqw; height:4.6cqw; }
+  .spot .order-badge{
+    display:none; position:absolute; left:50%; top:50%; transform:translate(-50%,-50%);
+    width:4.8cqw; height:4.8cqw; min-width:19px; min-height:19px; border-radius:50%;
+    background:var(--gold); color:#fff; font-size:2.9cqw; font-weight:800;
+    align-items:center; justify-content:center; z-index:3;
+    border:2px solid #fff; box-shadow:0 1px 4px rgba(0,0,0,.25);
+  }
+  body.route-mode .spot .order-badge{ display:flex; }
+  body.route-mode .spot{ opacity:.32; }
+  body.route-mode .spot.on-route{ opacity:1; }
+  body.route-mode .spot.on-route .dot{ transform:scale(.72); }
+  body.route-mode .spot.special .lbl{ color:#b5740c; }
+
+  .tag-cart{ font-size:2.6cqw; color:#fff; background:#8aa3ba; border-radius:5px; padding:0 4px; margin-left:3px; font-weight:500; vertical-align:1px;}
+
+  .route-line{ opacity:0; transition:opacity .4s; }
+  body.route-mode .route-line{ opacity:1; }
+  .route-line path{ stroke-dasharray:9 9; animation:dash 1.1s linear infinite; }
+  @keyframes dash{ to{ stroke-dashoffset:-18; } }
+
+  /* ===== 贴士卡片 ===== */
+  .tips{ margin:18px 16px 0; display:grid; grid-template-columns:1fr 1fr; gap:10px; }
+  .tip-card{ background:#fff; border:1px solid #e1eef9; border-radius:14px; padding:12px 13px; box-shadow:0 3px 10px rgba(47,128,199,.06); }
+  .tip-card h3{ font-size:13.5px; color:var(--navy); margin-bottom:5px; display:flex; align-items:center; gap:6px; }
+  .tip-card h3::before{ content:""; width:6px; height:6px; border-radius:50%; background:var(--cyan); }
+  .tip-card p{ font-size:12px; color:#6c849b; line-height:1.7; }
+  .tip-card.wide{ grid-column:1/3; }
+  .foot{ text-align:center; font-size:11px; color:#93a9bd; margin-top:18px; line-height:1.8; padding:0 20px; }
+
+  /* ===== 底部弹层 ===== */
+  .mask{
+    position:fixed; inset:0; background:rgba(18,42,66,.45); z-index:50;
+    opacity:0; pointer-events:none; transition:opacity .28s; display:flex; align-items:flex-end; justify-content:center;
+  }
+  .mask.show{ opacity:1; pointer-events:auto; }
+  .sheet{
+    width:100%; max-width:480px; max-height:88vh; overflow-y:auto; -webkit-overflow-scrolling:touch;
+    background:#fff; border-radius:22px 22px 0 0; transform:translateY(100%); transition:transform .3s cubic-bezier(.22,.8,.3,1);
+  }
+  .mask.show .sheet{ transform:translateY(0); }
+  .grip{ width:40px; height:4px; border-radius:2px; background:#d3e1ed; margin:10px auto 4px; }
+  .sheet-x{
+    position:absolute; top:12px; right:14px; width:30px; height:30px; border-radius:50%;
+    background:rgba(0,0,0,.34); color:#fff; border:none; font-size:16px; line-height:30px; text-align:center; z-index:2;
+  }
+  .hero-img{ position:relative; width:100%; aspect-ratio:4/3; background:linear-gradient(135deg,#bfe0f5,#8fc3e6); overflow:hidden; }
+  .hero-img img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .hero-img .fallback{
+    position:absolute; inset:0; display:flex; align-items:center; justify-content:center;
+    color:#fff; font-size:26px; font-weight:800; letter-spacing:4px; text-shadow:0 2px 10px rgba(0,0,0,.25);
+  }
+  .hero-img .name-veil{
+    position:absolute; left:0; right:0; bottom:0; padding:26px 18px 12px;
+    background:linear-gradient(180deg,transparent,rgba(10,35,60,.72));
+    color:#fff; display:flex; align-items:flex-end; gap:8px;
+  }
+  .hero-img .name-veil b{ font-size:23px; letter-spacing:1px; }
+  .hero-img .name-veil em{ font-style:normal; font-size:11px; opacity:.85; margin-bottom:3px; }
+  .sheet-body{ padding:14px 18px 20px; }
+  .meta{ display:flex; flex-wrap:wrap; gap:7px; margin-bottom:12px; }
+  .meta span{
+    font-size:11.5px; color:var(--blue); background:#eef6fd; border:1px solid #d9eaf8;
+    border-radius:999px; padding:3px 10px;
+  }
+  .meta span.hot-m{ color:#b5740c; background:#fff6e6; border-color:#f3ddb2; }
+  .meta span.gray{ color:#7b93aa; background:#f1f6fa; border-color:#e2edf5; }
+  .desc{ font-size:14.5px; line-height:1.9; color:#33506c; }
+  .tip-box{
+    margin-top:14px; background:#f2faf9; border:1px solid #d2efeb; border-radius:12px;
+    padding:11px 13px; font-size:13px; line-height:1.8; color:#2f7a73;
+  }
+  .tip-box b{ display:block; font-size:12px; color:#128a82; margin-bottom:2px; }
+  .pager{ display:flex; gap:10px; margin-top:18px; }
+  .pager button{
+    flex:1; border:1px solid #d2e4f3; background:#fff; border-radius:12px; padding:11px 0;
+    font-size:13.5px; color:var(--blue); font-weight:600;
+  }
+  .pager button:active{ background:#eef6fd; }
+  .pager .cnt{ flex:0 0 64px; display:flex; align-items:center; justify-content:center; font-size:12px; color:#93a9bd; }
+
+  /* 路线弹层 */
+  .route-sheet{ padding:0 0 26px; }
+  .route-sheet h2{ text-align:center; font-size:20px; color:var(--navy); padding:6px 0 2px; letter-spacing:1px; }
+  .route-sheet .sub{ text-align:center; font-size:12px; color:#8aa3ba; margin-bottom:14px; }
+  .r-sec{ margin:0 18px 14px; border:1px solid #e1eef9; border-radius:14px; overflow:hidden; }
+  .r-sec .rh{ background:#eef6fd; padding:9px 14px; font-size:13.5px; font-weight:700; color:var(--navy); display:flex; justify-content:space-between; }
+  .r-sec .rh span{ font-weight:500; font-size:11.5px; color:var(--sub); }
+  .r-sec ol{ list-style:none; padding:8px 14px; }
+  .r-sec li{ position:relative; padding:7px 0 7px 30px; font-size:13px; line-height:1.65; color:#3a5875; }
+  .r-sec li::before{
+    content:attr(data-n); position:absolute; left:0; top:8px; width:20px; height:20px; border-radius:50%;
+    background:var(--gold); color:#fff; font-size:11px; font-weight:800; text-align:center; line-height:20px;
+  }
+  .r-sec li.no-n::before{ content:""; background:#bcd3e6; }
+  .r-sec li.cart::after{ content:"车览"; font-size:10px; color:#fff; background:#8aa3ba; border-radius:4px; padding:0 5px; margin-left:6px; }
+  .r-note{ margin:0 18px; font-size:11.5px; color:#8aa3ba; line-height:1.8; background:#f7fafd; border-radius:10px; padding:10px 13px; }
+  .r-btn{ display:block; margin:16px 18px 0; background:linear-gradient(135deg,#2f80c7,#19a7c4); color:#fff; text-align:center;
+    border:none; width:calc(100% - 36px); border-radius:13px; padding:13px 0; font-size:15px; font-weight:700; letter-spacing:1px; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <div class="hero">
+    <span class="hotel-pill">源全｜逸景酒店 · 住客专属旅行小助手</span>
+    <h1>九寨沟<br>互动地图</h1>
+    <p>点击地图上的景点圆点，查看景点介绍、打卡照片<br>和一日游精简路线</p>
+  </div>
+
+  <div class="chips">
+    <div class="chip"><b>景点详情</b><span>一点即看</span></div>
+    <div class="chip"><b>打卡照片</b><span>提前参考</span></div>
+    <button class="chip route-chip" id="routeChip"><b>精简路线</b><span>不走回头路</span></button>
+  </div>
+  <div class="legend">
+    <span><i style="background:#3f7fd6"></i>日则沟</span>
+    <span><i style="background:#12a39a"></i>则查洼沟</span>
+    <span><i style="background:#2b7fb8"></i>树正沟</span>
+    <span><i style="background:#f4a62a"></i>换乘中心</span>
+  </div>
+
+  <div class="map-wrap" id="mapWrap">
+    <svg viewBox="0 0 420 760" preserveAspectRatio="xMidYMid meet" aria-label="九寨沟Y型景区地图">
+      <defs>
+        <linearGradient id="gR" x1="0" y1="1" x2="0" y2="0">
+          <stop offset="0" stop-color="#7db4e6"/><stop offset="1" stop-color="#3f7fd6"/>
+        </linearGradient>
+        <linearGradient id="gZ" x1="0" y1="1" x2="0" y2="0">
+          <stop offset="0" stop-color="#7fd2cb"/><stop offset="1" stop-color="#12a39a"/>
+        </linearGradient>
+        <linearGradient id="gS" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#7db4e6"/><stop offset="1" stop-color="#2b7fb8"/>
+        </linearGradient>
+      </defs>
+
+      <!-- 背景装饰：雪山、云、等高线 -->
+      <g opacity=".9">
+        <polygon points="0,120 70,26 130,120" fill="#dcecfb"/>
+        <polygon points="52,58 70,26 88,58 76,56 70,48 64,56" fill="#fff"/>
+        <polygon points="286,120 356,20 426,120" fill="#dcecfb"/>
+        <polygon points="338,54 356,20 376,54 362,52 356,43 349,52" fill="#fff"/>
+        <ellipse cx="96" cy="150" rx="34" ry="10" fill="#ffffff" opacity=".75"/>
+        <ellipse cx="120" cy="142" rx="22" ry="8" fill="#ffffff" opacity=".75"/>
+        <ellipse cx="320" cy="160" rx="30" ry="9" fill="#ffffff" opacity=".7"/>
+      </g>
+      <g fill="none" stroke="#cfe2f2" stroke-width="1.2" opacity=".7">
+        <ellipse cx="210" cy="380" rx="180" ry="120"/>
+        <ellipse cx="210" cy="420" rx="150" ry="150"/>
+        <ellipse cx="210" cy="560" rx="120" ry="180"/>
+      </g>
+      <g fill="#9fc6dd" opacity=".55">
+        <path d="M30 500 l9 -18 l9 18 z"/><path d="M380 470 l9 -18 l9 18 z"/>
+        <path d="M24 610 l8 -16 l8 16 z"/><path d="M386 600 l8 -16 l8 16 z"/>
+        <path d="M150 96 l7 -14 l7 14 z"/><path d="M272 92 l7 -14 l7 14 z"/>
+      </g>
+
+      <!-- 河谷河床 -->
+      <g fill="none" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M210,735 C206,700 214,680 204,655 C196,635 210,615 205,595 C200,575 212,560 206,545 C200,530 204,515 202,500 C200,485 206,475 204,460 C202,445 202,435 204,425 C206,412 209,400 210,385" stroke="#cfe6f5" stroke-width="22"/>
+        <path d="M210,385 C188,360 168,332 152,300 C138,272 122,225 108,190 C96,160 80,115 72,80 L68,50" stroke="#cfe9e7" stroke-width="22"/>
+        <path d="M210,385 C230,360 244,344 252,330 C264,308 268,298 272,290 C286,264 290,250 296,240 C306,222 309,212 312,200 C322,176 324,162 326,150 C333,128 336,118 338,105 C342,86 344,72 345,60 L349,50" stroke="#d2e3f7" stroke-width="22"/>
+        <!-- 水面 -->
+        <path d="M210,735 C206,700 214,680 204,655 C196,635 210,615 205,595 C200,575 212,560 206,545 C200,530 204,515 202,500 C200,485 206,475 204,460 C202,445 202,435 204,425 C206,412 209,400 210,385" stroke="url(#gS)" stroke-width="15"/>
+        <path d="M210,385 C188,360 168,332 152,300 C138,272 122,225 108,190 C96,160 80,115 72,80 L68,50" stroke="url(#gZ)" stroke-width="15"/>
+        <path d="M210,385 C230,360 244,344 252,330 C264,308 268,298 272,290 C286,264 290,250 296,240 C306,222 309,212 312,200 C322,176 324,162 326,150 C333,128 336,118 338,105 C342,86 344,72 345,60 L349,50" stroke="url(#gR)" stroke-width="15"/>
+        <!-- 水面高光 -->
+        <path d="M210,735 C206,700 214,680 204,655 C196,635 210,615 205,595 C200,575 212,560 206,545 C200,530 204,515 202,500 C200,485 206,475 204,460 C202,445 202,435 204,425 C206,412 209,400 210,385" stroke="#ffffff" stroke-width="4" stroke-dasharray="2 14" opacity=".5"/>
+        <path d="M210,385 C188,360 168,332 152,300 C138,272 122,225 108,190 C96,160 80,115 72,80 L68,50" stroke="#ffffff" stroke-width="4" stroke-dasharray="2 14" opacity=".5"/>
+        <path d="M210,385 C230,360 244,344 252,330 C264,308 268,298 272,290 C286,264 290,250 296,240 C306,222 309,212 312,200 C322,176 324,162 326,150 C333,128 336,118 338,105 C342,86 344,72 345,60 L349,50" stroke="#ffffff" stroke-width="4" stroke-dasharray="2 14" opacity=".5"/>
+      </g>
+
+      <!-- 路线模式：金色动线 -->
+      <g class="route-line" fill="none" stroke="#f4a62a" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M210,735 C206,700 214,680 204,655 C196,635 210,615 205,595 C200,575 212,560 206,545 C200,530 204,515 202,500 C200,485 206,475 204,460 C202,445 202,435 204,425 C206,412 209,400 210,385 C230,360 244,344 252,330 C264,308 268,298 272,290 C286,264 290,250 296,240 C306,222 309,212 312,200 C322,176 324,162 326,150 C333,128 336,118 338,105 C342,86 344,72 345,60"/>
+        <path d="M210,385 C188,360 168,332 152,300 C138,272 122,225 108,190 C96,160 80,115 72,80"/>
+      </g>
+
+      <text x="115" y="146" font-size="13" fill="#5e9f9a" font-weight="700" transform="rotate(-63 115 146)" opacity=".85" letter-spacing="3">则查洼沟</text>
+      <text x="278" y="150" font-size="13" fill="#4f83c9" font-weight="700" transform="rotate(63 278 150)" opacity=".85" letter-spacing="3">日则沟</text>
+    </svg>
+
+    <div id="spots"></div>
+    <div class="hint" id="hint">轻点蓝色圆点，查看景点介绍与打卡照片</div>
+  </div>
+
+  <div class="tips">
+    <div class="tip-card">
+      <h3>观光车怎么坐</h3>
+      <p>沟内呈 Y 字形，建议车直达最高处再由上往下玩，节省体力。</p>
+    </div>
+    <div class="tip-card">
+      <h3>最佳拍摄时段</h3>
+      <p>镜海赶早看倒影，五花海正午色彩最艳，长海下午光线通透。</p>
+    </div>
+    <div class="tip-card">
+      <h3>海拔与装备</h3>
+      <p>海拔 2000–3100 米，慢行保暖，备干粮、热水和防晒雨具。</p>
+    </div>
+    <div class="tip-card">
+      <h3>门票预约</h3>
+      <p>门票与观光车票请提前在景区官方渠道实名预约，以官方为准。</p>
+    </div>
+  </div>
+
+  <div class="foot">
+    源全｜逸景酒店 · 祝您九寨沟之行愉快<br>
+    景点信息以景区当日公告为准
+  </div>
+</div>
+
+<!-- 景点详情弹层 -->
+<div class="mask" id="spotMask">
+  <div class="sheet" id="spotSheet">
+    <div class="grip"></div>
+    <button class="sheet-x" id="spotClose">×</button>
+    <div class="hero-img" id="heroImg">
+      <div class="fallback" id="imgFallback"></div>
+      <img id="spotImg" src="" alt="">
+      <div class="name-veil"><b id="sName"></b><em id="sEn"></em></div>
+    </div>
+    <div class="sheet-body">
+      <div class="meta" id="sMeta"></div>
+      <div class="desc" id="sDesc"></div>
+      <div class="tip-box"><b>打卡贴士</b><span id="sTip"></span></div>
+      <div class="pager">
+        <button id="prevBtn">上一个景点</button>
+        <span class="cnt" id="pageCnt"></span>
+        <button id="nextBtn">下一个景点</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 路线弹层 -->
+<div class="mask" id="routeMask">
+  <div class="sheet route-sheet">
+    <div class="grip"></div>
+    <button class="sheet-x" id="routeClose">×</button>
+    <h2>一日游精简路线</h2>
+    <div class="sub">全程约 25 公里 · 徒步约 8–10 公里 · 不走回头路</div>
+
+    <div class="r-sec">
+      <div class="rh">上午 · 日则沟（由上往下）<span>精华最密集</span></div>
+      <ol>
+        <li data-n="1">沟口乘观光车直达<b>原始森林</b>，呼吸天然氧吧</li>
+        <li data-n="2" class="cart">天鹅海 · 草海</li>
+        <li data-n="3">箭竹海（《英雄》取景地）</li>
+        <li data-n="4">熊猫海，看水下裸鲤</li>
+        <li data-n="5">五花海，九寨一绝，留足时间</li>
+        <li data-n="6">珍珠滩瀑布（《西游记》片尾）</li>
+        <li data-n="7">镜海，赶在起风前看倒影</li>
+      </ol>
+    </div>
+
+    <div class="r-sec">
+      <div class="rh">中午 · 诺日朗中心<span>用餐 · 换乘</span></div>
+      <ol><li class="no-n">唯一餐厅与换乘枢纽，用餐后换乘则查洼沟方向观光车</li></ol>
+    </div>
+
+    <div class="r-sec">
+      <div class="rh">下午 · 则查洼沟 + 树正沟<span>边下边玩</span></div>
+      <ol>
+        <li data-n="8">长海，九寨沟最大的海子</li>
+        <li data-n="9">五彩池，九寨最艳丽色块</li>
+        <li data-n="10">诺日朗瀑布，中国最宽钙华瀑布</li>
+        <li data-n="11">犀牛海</li>
+        <li data-n="12">老虎海</li>
+        <li data-n="13">树正群海 · 树正寨</li>
+        <li data-n="14">火花海</li>
+        <li data-n="15">芦苇海，沿玉带河栈道徒步</li>
+        <li class="no-n cart">盆景滩</li>
+      </ol>
+    </div>
+
+    <div class="r-note">
+      温馨提示：建议 7:30 前到沟口排队；季节海、草海、盆景滩以车览为主；具体开放区域、观光车收车时间以景区当日公告为准。
+    </div>
+    <button class="r-btn" id="showOrderBtn">在地图上显示游览顺序</button>
+  </div>
+</div>
+
+<script>
+var IMG_BASE = "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?image_size=landscape_4_3&prompt=";
+function img(p){ return IMG_BASE + encodeURIComponent(p); }
+
+// branch: r 日则沟 / z 则查洼沟 / s 树正沟 / c 中心 / e 沟口
+// side: l 文字在点左侧 / r 右侧 / t 上 / b 下
+var spots = [
+  { name:"原始森林", en:"Primeval Forest", branch:"r", x:345, y:60, side:"l", order:"1",
+    alt:"海拔约3060米", dur:"建议40分钟",
+    desc:"日则沟的尽头，古木参天、苔藓厚软，松萝在枝头随风轻摇，是一座巨大的天然氧吧。沿木栈道穿行在冷杉、云杉之间，可以零距离感受原始森林的苍茫气息。",
+    tip:"作为进沟第一站人最少、体验最好；海拔较高，台阶慢行，注意保暖。",
+    img:img("Jiuzhaigou primeval coniferous forest, ancient tall spruce and fir trees covered with green moss, sunbeams through canopy, wooden boardwalk path, misty fresh atmosphere, landscape photography") },
+
+  { name:"天鹅海·草海", en:"Swan & Grass Lake", branch:"r", x:338, y:105, side:"l", cart:true, order:"2",
+    alt:"海拔约2905米", dur:"车览为主",
+    desc:"日则沟上游的半沼泽湖泊，水草丰茂、清流蜿蜒，宽阔的草甸上野花点点，常有天鹅、野鸭在此栖息，野趣幽静。秋天草海金黄，是车窗外的隐藏美景。",
+    tip:"多数季节以观光车车览为主，坐靠窗位准备好相机。",
+    img:img("Jiuzhaigou Swan Lake and grass marsh, semi-swamp alpine lake with lush green aquatic grass, winding clear stream, wildflowers, calm reflective water with forested mountains, soft morning light") },
+
+  { name:"箭竹海", en:"Arrow Bamboo Lake", branch:"r", x:326, y:150, side:"r", order:"3",
+    alt:"海拔2618米", dur:"建议30分钟",
+    desc:"湖面开阔幽深，湖畔箭竹繁茂、杉木挺立，水中腐木横陈，与山影云影交织。电影《英雄》中湖心对决的经典场景便取景于此。",
+    tip:"上午风平浪静时倒影最美；湖边栈道环线平缓，老少皆宜。",
+    img:img("Jiuzhaigou Arrow Bamboo Lake, deep emerald alpine lake surrounded by dense arrow bamboo groves and tall fir trees, perfect mountain reflection on calm water, misty morning, cinematic landscape") },
+
+  { name:"熊猫海", en:"Panda Lake", branch:"r", x:312, y:200, side:"r", order:"4",
+    alt:"海拔2587米", dur:"建议20分钟",
+    desc:"湖水澄澈见底，水下倒木纵横，成群的嘉陵裸鲤在水中游弋。过去常有大熊猫到湖边饮水、觅食，熊猫海因此得名。",
+    tip:"海子下方的栈道观景台是看鱼群的好位置。",
+    img:img("Jiuzhaigou Panda Lake, crystal clear turquoise lake water with submerged fallen tree trunks and small fish swimming, steep forested mountains, sunny day, vivid nature photography") },
+
+  { name:"五花海", en:"Five Flower Lake", branch:"r", x:296, y:240, side:"r", hot:true, order:"5",
+    alt:"海拔2472米", dur:"建议60分钟",
+    desc:"九寨沟的灵魂、九寨一绝。富含钙离子的湖水与水藻、钙华沉积物交织，呈现鹅黄、翠绿、宝蓝、藏青等斑斓色块，水底枯木如玉珊瑚，被誉为“上帝打翻的调色盘”。",
+    tip:"老虎嘴观景台可俯瞰五花海全景（步行上坡约20分钟）；正午阳光直射时色彩最饱满。",
+    img:img("Jiuzhaigou Five Flower Lake, world famous multicolored lake with vivid jade green sapphire blue and amber water patches, submerged ancient fallen trees, colorful autumn forest reflection, breathtaking aerial angle") },
+
+  { name:"珍珠滩瀑布", en:"Pearl Shoal Falls", branch:"r", x:272, y:290, side:"r", hot:true, order:"6",
+    alt:"海拔2433米", dur:"建议30分钟",
+    desc:"宽约200米的扇形钙华瀑布，激流冲过凹凸不平的钙华滩面，溅起万千水珠，在阳光下如满坡滚动的珍珠。86版《西游记》片尾“你挑着担，我牵着马”即取景于此。",
+    tip:"沿栈道顺流而下，可从不同高度俯瞰瀑布，注意水雾湿滑。",
+    img:img("Jiuzhaigou Pearl Shoal Waterfall, wide fan-shaped travertine cascade with thousands of splashing white water droplets like pearls, mossy golden rocks, lush green mountains, long exposure") },
+
+  { name:"镜海", en:"Mirror Lake", branch:"r", x:252, y:330, side:"r", order:"7",
+    alt:"海拔2390米", dur:"建议20分钟",
+    desc:"一平如镜的海子，清晨无风之时，山谷、彩林、蓝天白云悉数倒映水中，纤毫毕现，正是“鱼在云中游，鸟在水里飞”的奇景。",
+    tip:"一定要赶早！通常8:30后起风，倒影便逐渐消失。",
+    img:img("Jiuzhaigou Mirror Lake at early morning, perfectly still glass-like water reflecting snow mountains pine forest and blue sky symmetrically, tiny clouds, serene dreamlike landscape") },
+
+  { name:"诺日朗中心", en:"Nuorilang Center", branch:"c", x:210, y:385, side:"t", special:true, order:"餐",
+    alt:"Y字沟谷交汇点", dur:"用餐换乘约1小时",
+    desc:"日则沟、则查洼沟与树正沟三条沟的交汇枢纽，也是景区内唯一的餐厅和观光车换乘中心，可在此补充餐饮、热水与纪念品。",
+    tip:"建议在此午餐，餐后换乘前往长海、五彩池方向；卫生间与休息区齐备。",
+    img:img("Nuorilang tourist service center in Jiuzhaigou valley, modern wooden visitor center building surrounded by green mountains and tall pine trees, sightseeing buses, blue sky with white clouds, travel photography") },
+
+  { name:"季节海", en:"Seasonal Lakes", branch:"z", x:152, y:300, side:"l", cart:true,
+    alt:"海拔2600米上下", dur:"车览为主",
+    desc:"分为上季节海与下季节海，水量随季节盈枯：夏秋雨季满湖碧蓝，冬春枯水期露出柔软草滩，湖畔高山牧场上常有牦牛悠闲吃草。",
+    tip:"观光车沿途经过，适合车览拍照，不同季节各有风味。",
+    img:img("Jiuzhaigou seasonal alpine lake, tranquil blue lake in summer beside green mountain meadows with grazing yaks, autumn colored forests and snow peaks in distance, peaceful valley view") },
+
+  { name:"五彩池", en:"Five Color Pool", branch:"z", x:108, y:190, side:"l", hot:true, order:"9",
+    alt:"海拔2995米", dur:"建议30分钟",
+    desc:"九寨沟最小却最艳丽的海子。池水极度清澈，阳光透过水体照在钙华沉积上，呈现蔚蓝、翠绿、金黄等一块块明艳色块，即便隆冬也不封冻。",
+    tip:"从长海沿栈道下行约10分钟即到；正午前后光线直射，色块最饱满。",
+    img:img("Jiuzhaigou Five Color Pool, tiny crystal clear travertine ponds glowing vivid turquoise, emerald blue and golden colors, colorful mineral deposits underwater, lush surrounding forest, sunny day") },
+
+  { name:"长海", en:"Long Lake", branch:"z", x:72, y:80, side:"r", hot:true, order:"8",
+    alt:"海拔3101米", dur:"建议40分钟",
+    desc:"九寨沟面积最大、海拔最高的海子，南北绵延约5公里，最深处超过80米。墨蓝色的湖水四周雪峰环抱、古木苍苍，被当地人称为“装不满、漏不干的宝葫芦”。",
+    tip:"观景台可俯瞰长海全景，十分出片；海拔高风大，记得加外套、慢走。",
+    img:img("Jiuzhaigou Long Lake Changhai, vast deep sapphire blue alpine lake surrounded by snow capped peaks and ancient pine forest, dramatic clouds, wooden viewing platform, grand panoramic landscape") },
+
+  { name:"诺日朗瀑布", en:"Nuorilang Waterfall", branch:"s", x:204, y:420, side:"r", hot:true, order:"10",
+    alt:"海拔2365米", dur:"建议30分钟",
+    desc:"中国最宽的钙华瀑布，宽达320米、落差24.5米。水流从陡崖顶端的翠谷间倾泻而下，声震山谷、水雾弥漫，是九寨沟的标志性景观之一。",
+    tip:"从诺日朗中心步行几分钟即达；上午顺光，更容易拍到彩虹。",
+    img:img("Nuorilang Waterfall Jiuzhaigou, magnificent 320 meter wide travertine waterfall, powerful white cascade dropping from green cliff surrounded by lush mountains, mist and rainbow, long exposure") },
+
+  { name:"犀牛海", en:"Rhinoceros Lake", branch:"s", x:200, y:455, side:"l", order:"11",
+    alt:"海拔2315米", dur:"建议20分钟",
+    desc:"树正沟中最大的海子，湖水湛蓝幽深，岸畔层次分明，倒影深邃。清晨薄雾浮上水面时，游船、彩林与远山若隐若现，如梦似幻。",
+    tip:"北岸公路侧观景台视野开阔，是拍倒影的经典机位。",
+    img:img("Jiuzhaigou Rhinoceros Lake, serene deep blue lake with crystal reflection of mountains and colorful forest, thin morning mist floating on water surface, soft golden light, poetic landscape") },
+
+  { name:"老虎海", en:"Tiger Lake", branch:"s", x:205, y:488, side:"r", order:"12",
+    alt:"海拔2298米", dur:"建议15分钟",
+    desc:"深幽静寂的海子，每到深秋，山上层林尽染，斑驳彩影映入水中，犹如老虎身上的斑纹。沿栈道下行不远便是树正瀑布。",
+    tip:"可与犀牛海、树正群海串联步行，节奏轻松。",
+    img:img("Jiuzhaigou Tiger Lake in autumn, quiet dark blue lake reflecting fiery red orange and golden forest canopy like tiger stripes, wooden boardwalk along shore, crisp autumn day") },
+
+  { name:"树正群海", en:"Shuzheng Lakes", branch:"s", x:200, y:525, side:"l", order:"13",
+    alt:"海拔2280米", dur:"建议40分钟",
+    desc:"大小40余个海子顺着山谷梯级铺展，绵延近5公里，碧水叠瀑之间点缀着栈桥、磨房与藏寨，浓缩了九寨沟“翠海、叠瀑”的全部精华。",
+    tip:"公路旁的观景台可俯瞰群海层次；时间充裕可走谷底栈道近距离感受。",
+    img:img("Jiuzhaigou Shuzheng Lakes group, terraced chain of forty turquoise travertine lakes cascading down forested valley, traditional Tibetan water mill and wooden bridge, aerial panoramic view, summer green") },
+
+  { name:"树正寨", en:"Shuzheng Village", branch:"s", x:208, y:555, side:"r",
+    alt:"树正沟核心", dur:"建议20分钟",
+    desc:"九寨沟内最大的藏族村寨，石木藏楼依山而建，九宝莲花菩提塔洁白庄严，经幡与转经筒随风转动，藏式风情浓郁。",
+    tip:"可短暂停留拍照、品尝烤牦牛肉串，尊重当地民俗与宗教设施。",
+    img:img("Shuzheng Tibetan village in Jiuzhaigou, traditional stone and wood Tibetan houses on hillside, white Buddhist stupas and colorful prayer flags, mountain and lake backdrop, warm sunlight, cultural travel") },
+
+  { name:"火花海", en:"Sparking Lake", branch:"s", x:198, y:590, side:"l", order:"14",
+    alt:"海拔2210米", dur:"建议20分钟",
+    desc:"每当晨曦初照、微风乍起，阳光在湖面碎波上跳跃，如同万千朵燃烧的火花。2017年地震后景区对坝体与水体进行了生态修复，如今碧水重现。",
+    tip:"只有清晨阳光斜射时才能看到“火花”效果，建议安排在出沟前顺路游览。",
+    img:img("Jiuzhaigou Sparking Lake at sunrise, small turquoise lake shimmering with thousands of golden sparkles on gentle ripples, submerged fallen trees in crystal water, autumn foliage around, morning rays") },
+
+  { name:"芦苇海", en:"Reed Lake", branch:"s", x:205, y:625, side:"r", order:"15",
+    alt:"海拔2192米", dur:"建议40分钟",
+    desc:"全长2.2公里的芦苇荡，春夏翠绿如毯、秋日金黄翻浪，一条碧玉般的“玉带河”蜿蜒穿行其中，水鸟低飞，是树正沟最经典的徒步栈道段。",
+    tip:"推荐沿湖边栈道一路步行至盆景滩，平坦好走、移步换景。",
+    img:img("Jiuzhaigou Reed Lake, vast golden reed marsh in autumn with narrow jade green ribbon river winding through, clear reflection of mountains, white water birds, boardwalk trail, fairy-tale landscape") },
+
+  { name:"盆景滩", en:"Bonsai Shoal", branch:"s", x:202, y:660, side:"l", cart:true,
+    alt:"海拔2140米", dur:"车览为主",
+    desc:"钙华浅滩上，乔木、水柳与灌丛从流水中拔“滩”而起，树根被乳黄色钙华层层包裹，如同一座座天然盆景，流水潺潺、精巧玲珑。",
+    tip:"位于沟口附近，出沟时车览即可，时间充裕也可短停拍照。",
+    img:img("Jiuzhaigou Bonsai Shoal, travertine shoal with small trees and willows growing directly from flowing clear shallow water, roots wrapped in golden calcium deposits, natural miniature bonsai landscape, lush green") },
+
+  { name:"沟口", en:"Park Entrance", branch:"e", x:210, y:712, side:"b", special:true, order:"起",
+    alt:"景区入口", dur:"始发终到站",
+    desc:"九寨沟风景名胜区的主入口，观光车始发与终到站，设有售票厅、检票口、游客中心及行李寄存，是九寨之旅的起点与终点。",
+    tip:"建议7:30前到达排队进沟，开园第一时间乘车直奔原始森林；出沟后可在此购买伴手礼。",
+    img:img("Jiuzhaigou scenic area entrance gate, grand modern entrance plaza with Chinese sign, tourists with backpacks, sightseeing buses, flower beds and mountain backdrop, clear morning sky, travel destination") }
+];
+
+var branchName = { r:"日则沟", z:"则查洼沟", s:"树正沟", c:"游客枢纽", e:"景区入口" };
+var branchColor = { r:"#3f7fd6", z:"#12a39a", s:"#2b7fb8", c:"#f4a62a", e:"#3aa76d" };
+
+/* ===== 渲染景点标记 ===== */
+var spotsEl = document.getElementById("spots");
+spots.forEach(function(s, i){
+  s._i = i;
+  var btn = document.createElement("button");
+  btn.className = "spot side-" + s.side + (s.hot ? " hot":"") + (s.branch==="c"||s.branch==="e" ? (s.branch==="e" ? " entry":" special"):"") + (s.order ? " on-route":"");
+  btn.style.left = (s.x/420*100) + "%";
+  btn.style.top = (s.y/760*100) + "%";
+  btn.setAttribute("aria-label", s.name);
+  var cart = s.cart ? '<span class="tag-cart">车览</span>' : "";
+  btn.innerHTML = '<span class="dot" style="--c:'+branchColor[s.branch]+'"></span>'
+    + '<span class="lbl">'+s.name+cart+'</span>'
+    + (s.order ? '<span class="order-badge">'+s.order+'</span>' : "");
+  btn.addEventListener("click", function(){ openSpot(i); });
+  spotsEl.appendChild(btn);
+});
+
+/* ===== 景点弹层 ===== */
+var spotMask = document.getElementById("spotMask");
+var cur = 0;
+function openSpot(i){
+  cur = i;
+  var s = spots[i];
+  document.getElementById("sName").textContent = s.name;
+  document.getElementById("sEn").textContent = s.en;
+  document.getElementById("sDesc").textContent = s.desc;
+  document.getElementById("sTip").textContent = s.tip;
+  var meta = '<span>'+branchName[s.branch]+'</span><span>'+s.alt+'</span><span>'+s.dur+'</span>';
+  if (s.hot) meta += '<span class="hot-m">必打卡</span>';
+  if (s.cart) meta += '<span class="gray">车览景点</span>';
+  document.getElementById("sMeta").innerHTML = meta;
+  document.getElementById("pageCnt").textContent = (i+1) + " / " + spots.length;
+
+  var im = document.getElementById("spotImg");
+  var fb = document.getElementById("imgFallback");
+  fb.style.display = "flex"; fb.textContent = s.name;
+  im.style.display = "none";
+  im.onload = function(){ fb.style.display="none"; im.style.display="block"; };
+  im.onerror = function(){ fb.style.display="flex"; im.style.display="none"; };
+  im.src = s.img; im.alt = s.name + " 打卡照片";
+
+  spotMask.classList.add("show");
+  document.getElementById("spotSheet").scrollTop = 0;
+  document.getElementById("hint").classList.add("hide");
+}
+function closeSpot(){ spotMask.classList.remove("show"); }
+document.getElementById("spotClose").onclick = closeSpot;
+spotMask.addEventListener("click", function(e){ if(e.target===spotMask) closeSpot(); });
+document.getElementById("prevBtn").onclick = function(){ openSpot((cur - 1 + spots.length) % spots.length); };
+document.getElementById("nextBtn").onclick = function(){ openSpot((cur + 1) % spots.length); };
+
+/* ===== 路线弹层 ===== */
+var routeMask = document.getElementById("routeMask");
+function openRoute(){ routeMask.classList.add("show"); }
+function closeRoute(){ routeMask.classList.remove("show"); }
+var routeChipEl = document.getElementById("routeChip");
+routeChipEl.onclick = function(){
+  if (document.body.classList.contains("route-mode")) {
+    // 路线模式下再次点击：关闭标号
+    document.body.classList.remove("route-mode");
+    this.querySelector("b").textContent = "精简路线";
+    this.querySelector("span").textContent = "不走回头路";
+  } else {
+    openRoute();
+  }
+};
+document.getElementById("routeClose").onclick = closeRoute;
+routeMask.addEventListener("click", function(e){ if(e.target===routeMask) closeRoute(); });
+document.getElementById("showOrderBtn").onclick = function(){
+  document.body.classList.add("route-mode");
+  closeRoute();
+  document.getElementById("mapWrap").scrollIntoView({behavior:"smooth", block:"start"});
+  routeChipEl.querySelector("b").textContent = "退出路线";
+  routeChipEl.querySelector("span").textContent = "点击关闭标号";
+};
+
+/* 首次点击地图任意位置后隐藏提示 */
+document.getElementById("mapWrap").addEventListener("click", function(){
+  document.getElementById("hint").classList.add("hide");
+}, true);
+</script>
+</body>
+</html>
