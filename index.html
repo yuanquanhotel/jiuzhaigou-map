@@ -379,8 +379,17 @@
 </div>
 
 <script>
-var IMG_BASE = "https://trae-api-cn.mchost.guru/api/ide/v1/text_to_image?image_size=landscape_4_3&prompt=";
-function img(p){ return IMG_BASE + encodeURIComponent(p); }
+var IMG_FILES = [
+  "01-primeval-forest.jpg","02-swan-grass-lake.jpg","03-arrow-bamboo-lake.jpg",
+  "04-panda-lake.jpg","05-five-flower-lake.jpg","06-pearl-shoal-falls.jpg",
+  "07-mirror-lake.jpg","08-nuorilang-center.jpg","09-seasonal-lakes.jpg",
+  "10-five-color-pool.jpg","11-long-lake.jpg","12-nuorilang-falls.jpg",
+  "13-rhinoceros-lake.jpg","14-tiger-lake.jpg","15-shuzheng-lakes.jpg",
+  "16-shuzheng-village.jpg","17-sparking-lake.jpg","18-reed-lake.jpg",
+  "19-bonsai-shoal.jpg","20-park-entrance.jpg"
+];
+var _imgCounter = 0;
+function img(p){ return IMG_FILES[_imgCounter++] || p; }
 
 // branch: r 日则沟 / z 则查洼沟 / s 树正沟 / c 中心 / e 沟口
 // side: l 文字在点左侧 / r 右侧 / t 上 / b 下
